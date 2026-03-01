@@ -1,7 +1,8 @@
 import java.util.ArrayList;
+import java.util.Objects;
 
-public class PizzaSide {
-    private String name;
+public class PizzaSide implements Priceable{
+    private String name = "0";
     private ArrayList<Ingredient> ingredients;
     private ArrayList<Pizza> pizzas;
 
@@ -27,6 +28,7 @@ public class PizzaSide {
 
     public  void removePizza(Pizza pizza) {pizzas.remove(pizza);}
 
+    @Override
     public double calculatePrice() {
         double total = 0;
         for (Ingredient ing : ingredients) {
