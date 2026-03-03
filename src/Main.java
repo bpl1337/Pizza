@@ -1,3 +1,5 @@
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class Main {
@@ -6,11 +8,12 @@ public class Main {
     private static ArrayList<PizzaBase> base = new ArrayList<>();
     private static ArrayList<Pizza> pizzas = new ArrayList<>();
     private static ArrayList<PizzaSide> sides = new ArrayList<>();
-
+    private static ArrayList<Order> orders = new ArrayList<>();
 
     public static void main(String[] args) {
         Main myProgram = new Main();
         myProgram.seedData();
+
         myProgram.run();
     }
 
@@ -22,11 +25,17 @@ public class Main {
         ingredients.add(new Ingredient("Кунжут", 20));
 
         base.add(new PizzaBase("Классическая", 50, true));
+
         Pizza standartP = new Pizza("Стандарт", base.getFirst(), "Средний");
         standartP.addIngredient(ingredients.get(0));
         standartP.addIngredient(ingredients.get(2));
         standartP.addIngredient(ingredients.get(3));
         pizzas.add(standartP);
+        Pizza margaritaP = new Pizza("Маргарита", base.getFirst(), "Средний");
+        margaritaP.addIngredient(ingredients.get(1));
+        margaritaP.addIngredient(ingredients.get(4));
+        margaritaP.addIngredient(ingredients.get(3));
+        pizzas.add(margaritaP);
 
         PizzaSide standartS = new PizzaSide("Базовый");
         standartS.addIngredient(ingredients.get(1));
@@ -590,7 +599,6 @@ public class Main {
                                 }
                                 if (newIng != null) {
                                     target.addIngredient(newIng);
-                                    System.out.println("Ингредиент успешно добавлен!\n");
                                 } else {
                                     System.out.println("Ингредиент не найден...\n");
                                 }
@@ -603,8 +611,10 @@ public class Main {
                                 }
 
                                 System.out.println("Текущий состав пиццы:");
-                                for (Ingredient ing : target.getIngredients()) {
-                                    System.out.println("- " + ing.getName());
+                                for (Map.Entry<Ingredient, Integer> entry : target.getIngredients().entrySet()) {
+                                    Ingredient ing = entry.getKey();
+                                    Integer count = entry.getValue();
+                                    System.out.println("- " + ing.getName() + ": " + count + " порц");
                                 }
 
                                 System.out.print("Введите название ингредиента для удаления (или 0 для отмены): ");
@@ -612,7 +622,9 @@ public class Main {
                                 if (ingName.equals("0")) continue;
 
                                 Ingredient ingToRemove = null;
-                                for (Ingredient ing : target.getIngredients()) {
+                                for (Map.Entry<Ingredient, Integer> entry : target.getIngredients().entrySet()) {
+                                    Ingredient ing = entry.getKey();
+                                    Integer count = entry.getValue();
                                     if (ing.getName().equalsIgnoreCase(ingName)) {
                                         ingToRemove = ing;
                                         break;
@@ -621,7 +633,6 @@ public class Main {
 
                                 if (ingToRemove != null) {
                                     target.removeIngredient(ingToRemove);
-                                    System.out.println("Ингредиент '" + ingToRemove.getName() + "' успешно удален из пиццы!\n");
                                 } else {
                                     System.out.println("Такого ингредиента нет в составе этой пиццы...\n");
                                 }
@@ -759,20 +770,22 @@ public class Main {
                     idx, p.getName(), p.getBase().getName(),p.getSize(), p.check(), p.calculatePrice());
 
             System.out.print("   Состав: ");
-            ArrayList<Ingredient> ings = p.getIngredients();
+            Map<Ingredient, Integer> ings = p.getIngredients();
 
             if (ings.isEmpty()) {
                 System.out.println("только основа");
             } else {
-                ArrayList<String> ingNames = new ArrayList<>();
-                for (Ingredient ing : ings) {
-                    ingNames.add(ing.getName());
+                System.out.print("|   ");
+                for (Map.Entry<Ingredient, Integer> entry : ings.entrySet()) {
+                    Ingredient ing = entry.getKey();
+                    Integer count = entry.getValue();
+                    System.out.print(ing.getName() + ": " + count + " порц   |   ");
                 }
-                System.out.println(String.join(", ", ingNames));
             }
+            System.out.println();
             idx++;
         }
-        System.out.println("======================\n");
+        System.out.println("\n======================\n");
     }
 
     public void manageMenuSides() {
@@ -1040,22 +1053,35 @@ public class Main {
     }
 
     public void manageMenuOrder() {
-        ArrayList<Priceable> currentOrderItems = new ArrayList<>();
+        ArrayList<OrderItem> currentOrderItems = new ArrayList<>();
 
         while (true) {
             System.out.println("\n=== МЕНЮ ЗАКАЗОВ ===");
             System.out.println("1. Создать заказ");
-            System.out.println("2. Редактировать заказ");
-            System.out.println("3. Удалить заказ");
-            System.out.println("4. Вывести список всех заказов");
+            System.out.println("2. Удалить заказ");
+            System.out.println("3. Вывести список всех заказов");
             System.out.println("0. Выйти");
             System.out.print("Выбор: ");
             int choice = scanner.nextInt();
             scanner.nextLine();
 
             switch (choice) {
-                case 1:
+                case 1: {
                     boolean isBuildingOrder = true;
+
+                    ArrayList<Guest> currentGuests = new ArrayList<>();
+                    System.out.print("Желаете разделить заказ по гостям? (y/n): ");
+                    String splitBill = scanner.nextLine();
+                    if (splitBill.equalsIgnoreCase("y")) {
+                        System.out.print("Введите количество гостей: ");
+                        int guestCount = scanner.nextInt();
+                        scanner.nextLine();
+                        for (int i = 0; i < guestCount; i++) {
+                            System.out.print("Введите имя гостя " + (i + 1) + ": ");
+                            currentGuests.add(new Guest(scanner.nextLine()));
+                        }
+                    }
+
                     while (isBuildingOrder) {
                         System.out.println("\n--- СБОРКА ЗАКАЗА ---");
                         System.out.println("В корзине позиций: " + currentOrderItems.size());
@@ -1069,7 +1095,7 @@ public class Main {
                         scanner.nextLine();
 
                         switch (choice2) {
-                            case 1:
+                            case 1: {
                                 displayListOfPizzas();
                                 System.out.print("Введите название пиццы (или 0 для отмены): ");
                                 String pizzaName = scanner.nextLine();
@@ -1093,23 +1119,30 @@ public class Main {
                                         template.getBase(),
                                         template.getSize(),
                                         template.getSide());
-                                else orderedPizza = new Pizza(template.getName(), template.getBase(), template.getSize());
-                                for (Ingredient ing : template.getIngredients()) {
+                                else
+                                    orderedPizza = new Pizza(template.getName(), template.getBase(), template.getSize());
+
+                                for (Map.Entry<Ingredient, Integer> entry : template.getIngredients().entrySet()) {
+                                    Ingredient ing = entry.getKey();
                                     orderedPizza.addIngredient(ing);
                                 }
 
                                 while (true) {
                                     System.out.println("\nТекущий состав пиццы '" + orderedPizza.getName() + "':");
-                                    for (Ingredient ing : orderedPizza.getIngredients()) {
-                                        System.out.println("- " + ing.getName() + " (" + ing.getPrice() + " руб.)");
+                                    for (Map.Entry<Ingredient, Integer> entry : orderedPizza.getIngredients().entrySet()) {
+                                        Ingredient ing = entry.getKey();
+                                        Integer count = entry.getValue();
+                                        System.out.println("- " + ing.getName() + " " + count + " порц" + " (" + ing.getPrice() + " руб.)");
                                     }
 
-                                    System.out.print("Введите название ингредиента для удвоения (или 0 чтобы добавить пиццу в корзину): ");
+                                    System.out.print("Введите название ингредиента для того чтобы увеличить на одну порцию" +
+                                            " (или 0 чтобы добавить пиццу в корзину): ");
                                     String ingName = scanner.nextLine();
                                     if (ingName.equals("0")) break;
 
                                     Ingredient foundToDouble = null;
-                                    for (Ingredient ing : orderedPizza.getIngredients()) {
+                                    for (Map.Entry<Ingredient, Integer> entry : orderedPizza.getIngredients().entrySet()) {
+                                        Ingredient ing = entry.getKey();
                                         if (ing.getName().equalsIgnoreCase(ingName)) {
                                             foundToDouble = ing;
                                             break;
@@ -1118,25 +1151,387 @@ public class Main {
 
                                     if (foundToDouble != null) {
                                         orderedPizza.addIngredient(foundToDouble);
-                                        System.out.println("Порция '" + foundToDouble.getName() + "' успешно удвоена!\n");
                                     } else {
                                         System.out.println("Такого ингредиента нет в базовом составе этой пиццы...\n");
                                     }
                                 }
 
-                                currentOrderItems.add(orderedPizza);
+                                ArrayList<Guest> itemOwners = new ArrayList<>();
+                                if (!currentGuests.isEmpty()) {
+                                    System.out.println("\nКто будет платить за пиццу '" + orderedPizza.getName() + "'?");
+                                    for (int i = 0; i < currentGuests.size(); i++) {
+                                        System.out.println((i + 1) + ". " + currentGuests.get(i).getName());
+                                    }
+
+                                    while (true) {
+                                        System.out.print("Введите номер гостя (или 0 чтобы завершить): ");
+                                        int gIndex = scanner.nextInt();
+                                        scanner.nextLine();
+
+                                        if (gIndex == 0) {
+                                            if (itemOwners.isEmpty()) {
+                                                System.out.println("Ошибка: вы должны выбрать хотя бы одного плательщика!");
+                                                continue;
+                                            } else {
+                                                break;
+                                            }
+                                        }
+
+                                        if (gIndex > 0 && gIndex <= currentGuests.size()) {
+                                            Guest selectedGuest = currentGuests.get(gIndex - 1);
+
+                                            if (!itemOwners.contains(selectedGuest)) {
+                                                itemOwners.add(selectedGuest);
+                                                System.out.println("Гость '" + selectedGuest.getName() + "' добавлен к оплате.");
+                                            } else {
+                                                System.out.println("Этот гость уже добавлен.");
+                                            }
+                                        } else {
+                                            System.out.println("Гостя с таким номером нет. Попробуйте снова.");
+                                        }
+                                    }
+                                }
+
+                                currentOrderItems.add(new OrderItem(orderedPizza, itemOwners));
                                 System.out.println("Пицца добавлена в корзину!\n");
                                 continue;
+                            }
+                            case 2: {
+                                System.out.print("Введите название для вашей новой пиццы 50/50 (или 0 для отмены): ");
+                                String customName = scanner.nextLine();
+                                if (customName.equals("0")) continue;
 
-                            case 2:
-                                System.out.println("В разработке...");
-                                break;
+                                System.out.println("Выберите размер пиццы:");
+                                System.out.println("1. Маленький");
+                                System.out.println("2. Средний");
+                                System.out.println("3. Большой");
+                                System.out.print("Выбор (цифра): ");
+                                int sizeChoice = scanner.nextInt();
+                                scanner.nextLine();
 
-                            case 3:
-                                System.out.println("В разработке...");
-                                break;
+                                String selectedSize = "";
+                                if (sizeChoice == 1) selectedSize = "Маленький";
+                                else if (sizeChoice == 2) selectedSize = "Средний";
+                                else if (sizeChoice == 3) selectedSize = "Большой";
+                                else {
+                                    System.out.println("Некорректный размер!\n");
+                                    continue;
+                                }
 
-                            case 4:
+                                ArrayList<Pizza> availablePizzas = new ArrayList<>();
+                                for (Pizza p : pizzas) {
+                                    if (p.getSize().equalsIgnoreCase(selectedSize)) {
+                                        availablePizzas.add(p);
+                                    }
+                                }
+
+                                if (availablePizzas.size() < 2) {
+                                    System.out.println("Недостаточно пицц размера '" + selectedSize + "' в меню для создания 50/50 (нужно минимум 2).\n");
+                                    continue;
+                                }
+
+                                System.out.println("\nДоступные пиццы размера '" + selectedSize + "':");
+                                for (Pizza p : availablePizzas) {
+                                    System.out.println("- " + p.getName());
+                                }
+
+                                Pizza firstHalf = null;
+                                while (firstHalf == null) {
+                                    System.out.print("Введите название первой пиццы (или 0 для отмены): ");
+                                    String pName = scanner.nextLine();
+                                    if (pName.equals("0")) break;
+
+                                    for (Pizza p : availablePizzas) {
+                                        if (p.getName().equalsIgnoreCase(pName)) {
+                                            firstHalf = p;
+                                            break;
+                                        }
+                                    }
+                                    if (firstHalf == null) System.out.println("Пицца не найдена, попробуйте снова.");
+                                }
+                                if (firstHalf == null) continue;
+
+                                Pizza secondHalf = null;
+                                while (secondHalf == null) {
+                                    System.out.print("Введите название второй пиццы (или 0 для отмены): ");
+                                    String pName = scanner.nextLine();
+                                    if (pName.equals("0")) break;
+
+                                    if (pName.equalsIgnoreCase(firstHalf.getName())) {
+                                        System.out.println("Вторая половинка должна отличаться от первой! Выберите другую пиццу.");
+                                        continue;
+                                    }
+
+                                    for (Pizza p : availablePizzas) {
+                                        if (p.getName().equalsIgnoreCase(pName)) {
+                                            secondHalf = p;
+                                            break;
+                                        }
+                                    }
+                                    if (secondHalf == null) System.out.println("Пицца не найдена, попробуйте снова.");
+                                }
+                                if (secondHalf == null) continue;
+
+                                boolean check = true;
+                                PizzaBase selectedBase = null;
+                                while (check) {
+                                    System.out.println("\nВыберите основу для пиццы:");
+                                    System.out.println("1. Взять основу от '" + firstHalf.getName() + "' (" + firstHalf.getBase().getName() + ")");
+                                    System.out.println("2. Взять основу от '" + secondHalf.getName() + "' (" + secondHalf.getBase().getName() + ")");
+                                    System.out.print("Ваш выбор(цифра): ");
+                                    int baseChoice = scanner.nextInt();
+                                    scanner.nextLine();
+
+                                    switch (baseChoice) {
+                                        case 1:
+                                            selectedBase = firstHalf.getBase();
+                                            check = false;
+                                            break;
+                                        case 2:
+                                            selectedBase = secondHalf.getBase();
+                                            check = false;
+                                            break;
+                                        default:
+                                            System.out.println("Некорректный ввод, попробуйте снова...");
+                                            break;
+                                    }
+                                }
+                                PizzaFiftyToFifty comboPizza = new PizzaFiftyToFifty(
+                                        customName,
+                                        selectedBase,
+                                        selectedSize,
+                                        firstHalf,
+                                        secondHalf
+                                );
+
+                                ArrayList<Guest> itemOwners = new ArrayList<>();
+                                if (!currentGuests.isEmpty()) {
+                                    System.out.println("\nКто будет платить за пиццу '" + comboPizza.getName() + "'?");
+                                    for (int i = 0; i < currentGuests.size(); i++) {
+                                        System.out.println((i + 1) + ". " + currentGuests.get(i).getName());
+                                    }
+
+                                    while (true) {
+                                        System.out.print("Введите номер гостя (или 0 чтобы завершить): ");
+                                        int gIndex = scanner.nextInt();
+                                        scanner.nextLine();
+
+                                        if (gIndex == 0) {
+                                            if (itemOwners.isEmpty()) {
+                                                System.out.println("Ошибка: вы должны выбрать хотя бы одного плательщика!");
+                                                continue;
+                                            } else {
+                                                break;
+                                            }
+                                        }
+
+                                        if (gIndex > 0 && gIndex <= currentGuests.size()) {
+                                            Guest selectedGuest = currentGuests.get(gIndex - 1);
+
+                                            if (!itemOwners.contains(selectedGuest)) {
+                                                itemOwners.add(selectedGuest);
+                                                System.out.println("Гость '" + selectedGuest.getName() + "' добавлен к оплате.");
+                                            } else {
+                                                System.out.println("Этот гость уже добавлен.");
+                                            }
+                                        } else {
+                                            System.out.println("Гостя с таким номером нет. Попробуйте снова.");
+                                        }
+                                    }
+                                }
+
+                                currentOrderItems.add(new OrderItem(comboPizza, itemOwners));
+                                System.out.println("Пицца добавлена в корзину!\n");
+                                continue;
+                            }
+                            case 3: {
+                                System.out.print("Введите название вашей авторской пиццы (или 0 для отмены): ");
+                                String customName = scanner.nextLine();
+                                if (customName.equals("0")) continue;
+
+                                displayListOfBases();
+                                System.out.print("Введите название основы для пиццы (или 0 для отмены): ");
+                                String baseName = scanner.nextLine();
+                                if (baseName.equals("0")) continue;
+
+                                PizzaBase selectedBase = null;
+                                for (PizzaBase b : base) {
+                                    if (b.getName().equalsIgnoreCase(baseName)) {
+                                        selectedBase = b;
+                                        break;
+                                    }
+                                }
+                                if (selectedBase == null) {
+                                    System.out.println("Основа не найдена...\n");
+                                    continue;
+                                }
+
+                                System.out.println("Выберите размер пиццы:");
+                                System.out.println("1. Маленький (6 кусочков)");
+                                System.out.println("2. Средний (8 кусочков)");
+                                System.out.println("3. Большой (12 кусочков)");
+                                System.out.print("Выбор (цифра): ");
+                                int sizeChoice = scanner.nextInt();
+                                scanner.nextLine();
+
+                                String selectedSize = "";
+                                if (sizeChoice == 1) selectedSize = "Маленький";
+                                else if (sizeChoice == 2) selectedSize = "Средний";
+                                else if (sizeChoice == 3) selectedSize = "Большой";
+                                else {
+                                    System.out.println("Некорректный размер!\n");
+                                    continue;
+                                }
+
+                                PizzaSlice customSlicePizza = new PizzaSlice(customName, selectedBase, selectedSize);
+                                boolean cancelPizza = false;
+
+                                while (!customSlicePizza.isFullyFilled()) {
+                                    System.out.print("\nОсталось заполнить кусочки: ");
+                                    boolean[] status = customSlicePizza.getFilledStatus();
+                                    for (int i = 0; i < status.length; i++) {
+                                        if (!status[i]) System.out.print((i + 1) + " ");
+                                    }
+                                    System.out.println();
+                                    System.out.print("Введите номер кусочка (например '1') или диапазон (например '1 5') (или 0 для отмены): ");
+                                    String rangeInput = scanner.nextLine();
+
+                                    if (rangeInput.equals("0")) {
+                                        cancelPizza = true;
+                                        break;
+                                    }
+
+                                    int startSlice = -1, endSlice = -1;
+                                    try {
+                                        String[] parts = rangeInput.split(" ");
+                                        if (parts.length == 1) {
+                                            startSlice = Integer.parseInt(parts[0]);
+                                            endSlice = startSlice;
+                                        } else if (parts.length == 2) {
+                                            startSlice = Integer.parseInt(parts[0]);
+                                            endSlice = Integer.parseInt(parts[1]);
+                                        } else {
+                                            throw new NumberFormatException();
+                                        }
+                                    } catch (NumberFormatException e) {
+                                        System.out.println("Некорректный ввод! Введите одно число или два числа через пробел.");
+                                        continue;
+                                    }
+
+                                    if (startSlice > endSlice || startSlice < 1 || endSlice > customSlicePizza.getSliceCount()) {
+                                        System.out.println("Введен некорректный диапазон кусочков!");
+                                        continue;
+                                    }
+
+                                    boolean alreadyFilled = false;
+                                    for (int i = startSlice - 1; i < endSlice; i++) {
+                                        if (status[i]) alreadyFilled = true;
+                                    }
+                                    if (alreadyFilled) {
+                                        System.out.println("В этом диапазоне есть уже заполненные кусочки. Выберите только пустые.");
+                                        continue;
+                                    }
+
+                                    Map<Ingredient, Integer> tempIngredients = new HashMap<>();
+                                    while (true) {
+                                        displayListOfIngredients();
+                                        System.out.println("Текущая начинка для кусочков " + startSlice + "-" + endSlice + ":");
+                                        for (Map.Entry<Ingredient, Integer> entry : tempIngredients.entrySet()) {
+                                            System.out.println("- " + entry.getKey().getName() + " x" + entry.getValue());
+                                        }
+
+                                        System.out.print("Введите название ингредиента (или 0 чтобы завершить начинку): ");
+                                        String ingName = scanner.nextLine();
+                                        if (ingName.equals("0")) break;
+
+                                        Ingredient selectedIng = null;
+                                        for (Ingredient ing : ingredients) {
+                                            if (ing.getName().equalsIgnoreCase(ingName)) {
+                                                selectedIng = ing;
+                                                break;
+                                            }
+                                        }
+
+                                        if (selectedIng != null) {
+                                            tempIngredients.put(selectedIng, tempIngredients.getOrDefault(selectedIng, 0) + 1);
+                                            System.out.println("Ингредиент добавлен!\n");
+                                        } else {
+                                            System.out.println("Ингредиент не найден...\n");
+                                        }
+                                    }
+
+                                    PizzaSide tempSide = null;
+                                    while (true) {
+                                        displayListOfPizzaSides();
+                                        System.out.print("Введите название бортика для этих кусочков (или 0 если бортик не нужен): ");
+                                        String sideName = scanner.nextLine();
+                                        if (sideName.equals("0")) break;
+
+                                        for (PizzaSide s : sides) {
+                                            if (s.getName().equalsIgnoreCase(sideName)) {
+                                                tempSide = s;
+                                                break;
+                                            }
+                                        }
+
+                                        if (tempSide != null) {
+                                            System.out.println("Бортик '" + tempSide.getName() + "' успешно применен!\n");
+                                            break;
+                                        } else {
+                                            System.out.println("Бортик не найден...\n");
+                                        }
+                                    }
+
+                                    customSlicePizza.fillSlices(startSlice, endSlice, tempIngredients, tempSide);
+                                    System.out.println("Диапазон кусочков успешно заполнен!\n");
+                                }
+
+                                if (cancelPizza) {
+                                    System.out.println("Сборка кастомной пиццы отменена.\n");
+                                    continue;
+                                }
+
+                                ArrayList<Guest> itemOwners = new ArrayList<>();
+                                if (!currentGuests.isEmpty()) {
+                                    System.out.println("\nКто будет платить за пиццу '" + customSlicePizza.getName() + "'?");
+                                    for (int i = 0; i < currentGuests.size(); i++) {
+                                        System.out.println((i + 1) + ". " + currentGuests.get(i).getName());
+                                    }
+
+                                    while (true) {
+                                        System.out.print("Введите номер гостя (или 0 чтобы завершить): ");
+                                        int gIndex = scanner.nextInt();
+                                        scanner.nextLine();
+
+                                        if (gIndex == 0) {
+                                            if (itemOwners.isEmpty()) {
+                                                System.out.println("Ошибка: вы должны выбрать хотя бы одного плательщика!");
+                                                continue;
+                                            } else {
+                                                break;
+                                            }
+                                        }
+
+                                        if (gIndex > 0 && gIndex <= currentGuests.size()) {
+                                            Guest selectedGuest = currentGuests.get(gIndex - 1);
+
+                                            if (!itemOwners.contains(selectedGuest)) {
+                                                itemOwners.add(selectedGuest);
+                                                System.out.println("Гость '" + selectedGuest.getName() + "' добавлен к оплате.");
+                                            } else {
+                                                System.out.println("Этот гость уже добавлен.");
+                                            }
+                                        } else {
+                                            System.out.println("Гостя с таким номером нет. Попробуйте снова.");
+                                        }
+                                    }
+                                }
+
+                                currentOrderItems.add(new OrderItem(customSlicePizza, itemOwners));
+                                System.out.println("Пицца добавлена в корзину!\n");
+                                continue;
+                            }
+                            case 4: {
                                 if (currentOrderItems.isEmpty()) {
                                     System.out.println("Ваша корзина пуста! Добавьте хотя бы одну позицию.\n");
                                     continue;
@@ -1145,32 +1540,76 @@ public class Main {
                                 System.out.print("Введите комментарий к заказу (или оставьте пустым): ");
                                 String comment = scanner.nextLine();
 
-                                Order newOrder = new Order(comment);
-                                for (Priceable item : currentOrderItems) {
-                                    newOrder.addItem(item);
+                                System.out.print("Желаете сделать заказ отложенным? (y/n): ");
+                                String choice3 = scanner.nextLine();
+
+                                LocalDateTime targetTime = null;
+                                switch (choice3) {
+                                    case "y":
+                                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+                                        System.out.print("Введите дату и время (формат: 05.03.2026 15:30): ");
+                                        String inputTime = scanner.nextLine();
+                                        targetTime = LocalDateTime.parse(inputTime, formatter);
+                                        break;
+                                    case "n":
+                                        break;
+                                    default:
+                                        System.out.println("Некорректный ввод, попробуйте еще раз...");
+                                        continue;
                                 }
 
-                                newOrder.printReceipt();
+                                Order newOrder;
+                                if (targetTime != null)
+                                    newOrder = new Order(comment, targetTime);
+                                else
+                                    newOrder = new Order(comment);
 
+                                for (OrderItem item : currentOrderItems) {
+                                    newOrder.addItem(item);
+                                }
+                                orders.add(newOrder);
+                                newOrder.printReceipt();
                                 currentOrderItems.clear();
                                 isBuildingOrder = false;
                                 break;
-
+                            }
                             case 0:
                                 currentOrderItems.clear();
                                 isBuildingOrder = false;
                                 break;
-
                             default:
                                 System.out.println("Введен некорректный символ...\n");
                                 break;
                         }
                     }
                     break;
+                }
+                case 2: {
+                    displayListOfOrder();
+                    System.out.print("Введите id для удаления заказа (или 0 для отмены):");
+                    String choic3 = scanner.nextLine();
+                    if (choic3.equals("0")) break;
 
-                case 2:
-                case 3:
-                case 4:
+                    Order delOrder = null;
+                    for (Order order : orders) {
+                        if (Objects.equals(choic3, order.getId())) {
+                            delOrder = order;
+                            break;
+                        }
+                    }
+
+                    if (delOrder != null) {
+                        orders.remove(delOrder);
+                        System.out.println("Заказ с id " + delOrder.getId() + " успешно удален.");
+                    } else {
+                        System.out.println("Заказ с таким id " + delOrder.getId() + " не найден, попробуйте снова");
+                    }
+                    break;
+                }
+                case 3: {
+                    displayListOfOrder();
+                    break;
+                }
                 case 0:
                     return;
                 default:
@@ -1180,4 +1619,19 @@ public class Main {
         }
     }
 
+    public void displayListOfOrder() {
+        System.out.println("\n=== СПИСОК ЗАКАЗОВ ===");
+        if (orders.isEmpty()) {
+            System.out.println("Список заказов пока пуст.");
+            return;
+        }
+
+        int idx = 1;
+        for (Order o : orders) {
+            System.out.printf("ЗАКАЗ № - %d", idx);
+            o.printReceipt();
+            idx++;
+        }
+        System.out.println("=======================\n");
+    }
 }

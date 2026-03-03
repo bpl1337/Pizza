@@ -1,11 +1,10 @@
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.UUID;
+import java.util.*;
 
 public class Order {
     private String id;
-    private ArrayList<Priceable> items;
+    private ArrayList<OrderItem> items;
     private LocalDateTime orderTime;
     private LocalDateTime deferredTime;
     private String comment;
@@ -23,17 +22,7 @@ public class Order {
         this.deferredTime = deferredTime;
     }
 
-    public void addItem(Priceable item) {items.add(item);}
-
-    public void removeItem(Priceable item) {items.remove(item);}
-
-    public double calculateTotal() {
-        double total = 0;
-        for (Priceable item : items) {
-            total += item.calculatePrice();
-        }
-        return total;
-    }
+    public void addItem(OrderItem item) {items.add(item);}
 
     public void printReceipt() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
@@ -41,31 +30,49 @@ public class Order {
         System.out.println("\n=========================================");
         System.out.println("ЧЕК ЗАКАЗА #" + id);
         System.out.println("Создан: " + orderTime.format(formatter));
+        if (deferredTime != null) {System.out.println("ОТЛОЖЕННАЯ ДОСТАВКА НА: " + deferredTime.format(formatter));}
+        System.out.println("\n=========================================");
 
-        if (deferredTime != null) {
-            System.out.println("ОТЛОЖЕННАЯ ДОСТАВКА НА: " + deferredTime.format(formatter));
-        }
+        Map<Guest, Double> guestTotals = new HashMap<>();
+        double grandTotal = 0;
 
-        System.out.println("Комментарий: " + (comment.isEmpty() ? "Нет" : comment));
-        System.out.println("-----------------------------------------");
+        for (OrderItem orderItem : items) {
+            PriceAndName item = orderItem.getItem();
+            List<Guest> owners = orderItem.getOwners();
+            double price = item.calculatePrice();
+            grandTotal += price;
 
-        if (items.isEmpty()) {
-            System.out.println("Заказ пуст.");
-        } else {
-            int i = 1;
-            for (Priceable item : items) {
-                System.out.printf("%d. Позиция: %.2f руб.\n", i, item.calculatePrice());
-                i++;
+            System.out.printf("- %s: %.2f руб.\n", item.getName(), price);
+
+            if (!owners.isEmpty()) {
+                int totalCents = (int) Math.round(price * 100);
+                int splitCents = totalCents / owners.size();
+                int remainderCents = totalCents % owners.size();
+
+                for (int i = 0; i < owners.size(); i++) {
+                    Guest g = owners.get(i);
+                    double amountToPay = splitCents / 100.0;
+
+                    if (i < remainderCents) {
+                        amountToPay += 0.01;
+                    }
+
+                    guestTotals.put(g, guestTotals.getOrDefault(g, 0.0) + amountToPay);
+                }
             }
         }
 
-        System.out.println("-----------------------------------------");
-        System.out.printf("ИТОГО К ОПЛАТЕ: %.2f руб.\n", calculateTotal());
+        System.out.println("\n=========================================");
+        System.out.printf("ИТОГО: %.2f руб.\n", grandTotal);
+
+        if (!guestTotals.isEmpty()) {
+            System.out.println("\n--- К ОПЛАТЕ ПО ГОСТЯМ ---");
+            for (Map.Entry<Guest, Double> entry : guestTotals.entrySet()) {
+                System.out.printf("%s платит: %.2f руб.\n", entry.getKey().getName(), entry.getValue());
+            }
+        }
         System.out.println("=========================================\n");
     }
 
     public String getId() { return id; }
-    public LocalDateTime getOrderTime() { return orderTime; }
-    public LocalDateTime getDeferredTime() { return deferredTime; }
-    public ArrayList<Priceable> getItems() { return items; }
 }

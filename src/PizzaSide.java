@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class PizzaSide implements Priceable{
+public class PizzaSide implements PriceAndName{
     private String name = "0";
     private ArrayList<Ingredient> ingredients;
     private ArrayList<Pizza> pizzas;
@@ -12,6 +12,7 @@ public class PizzaSide implements Priceable{
         this.pizzas = new ArrayList<>();
     }
 
+    @Override
     public String getName() {return name;}
 
     public void setName(String name) {this.name = name;}
