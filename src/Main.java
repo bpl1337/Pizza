@@ -1,5 +1,4 @@
 import org.jetbrains.annotations.NotNull;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -425,6 +424,7 @@ public class Main {
             System.out.println("3. Удалить пиццу");
             System.out.println("4. Вывести список всех пицц");
             System.out.println("5. Вывести список всех пицц по цене");
+            System.out.println("6. Фильтрация по ингредиенту");
             System.out.println("0. Выйти");
             System.out.print("Выбор: ");
             int choice = scanner.nextInt();
@@ -780,14 +780,32 @@ public class Main {
 
                 case 4:
                     displayListOfPizzas(pizzas);
-                    System.out.print("Нажмите Enter, чтобы продолжить...");
-                    scanner.nextLine();
                     break;
 
                 case 5:
                     ArrayList<Pizza> sortedPizza = new ArrayList<>(pizzas);
                     sortedPizza.sort((o1, o2) -> Double.compare(o1.calculatePrice(), o2.calculatePrice()));
                     displayListOfPizzas(sortedPizza);
+                    break;
+
+                case 6:
+                    displayListOfIngredients(ingredients);
+                    System.out.print("Введите название ингредиента (или 0 для выхода):");
+                    String nameIng = scanner.nextLine();
+
+                    if (nameIng.equalsIgnoreCase("0")) continue;
+
+                    ArrayList<Pizza> filterPizza = new ArrayList<>();
+                    for (Pizza elem : pizzas) {
+                        for (Map.Entry<Ingredient, Integer> entry : elem.getIngredients().entrySet()) {
+                            String name = entry.getKey().getName();
+                            if (nameIng.equalsIgnoreCase(name)) {
+                                filterPizza.add(elem);
+                                break;
+                            }
+                        }
+                    }
+                    displayListOfPizzas(filterPizza);
                     break;
 
                 case 0:
@@ -825,6 +843,8 @@ public class Main {
             idx++;
         }
         System.out.println("\n======================\n");
+        System.out.print("Нажмите Enter, чтобы продолжить...");
+        scanner.nextLine();
     }
 
     public void manageMenuSides() {
@@ -835,7 +855,8 @@ public class Main {
             System.out.println("3. Удалить бортик");
             System.out.println("4. Вывести список всех бортиков");
             System.out.println("5. Вывести список всех бортиков по цене");
-            System.out.println("6. Показать доступные пиццы для бортика");
+            System.out.println("6. Фильтрация по ингредиенту");
+            System.out.println("7. Показать доступные пиццы для бортика");
             System.out.println("0. Выйти");
             System.out.print("Выбор: ");
             int choice = scanner.nextInt();
@@ -867,7 +888,7 @@ public class Main {
                         while (true) {
                             displayListOfIngredients(ingredients);
                             System.out.println("Имя бортика: " + newSide.getName() + " | Текущая цена: " + newSide.calculatePrice() + " руб.");
-                            System.out.print("Введите название ингредиента для добавления (или 0 чтобы перейти к выбору пицц): ");
+                            System.out.print("Введите название ингредиента для добавления (или 0 чтобы сохранить бортик): ");
                             String ingName = scanner.nextLine();
                             if (ingName.equals("0")) break;
 
@@ -1032,6 +1053,25 @@ public class Main {
                     break;
 
                 case 6:
+                    displayListOfIngredients(ingredients);
+                    System.out.print("Введите название ингредиента (или 0 для выхода):");
+                    String nameIng = scanner.nextLine();
+
+                    if (nameIng.equalsIgnoreCase("0")) continue;
+
+                    ArrayList<PizzaSide> filterSide = new ArrayList<>();
+                    for (PizzaSide elem : sides) {
+                        for (Ingredient ing : elem.getIngredients()) {
+                            if (nameIng.equalsIgnoreCase(ing.getName())) {
+                                filterSide.add(elem);
+                                break;
+                            }
+                        }
+                    }
+                    displayListOfPizzaSides(filterSide);
+                    break;
+
+                case 7:
                     while (true) {
                         displayListOfPizzaSides(sides);
                         System.out.print("Введите название интересующего бортика (или 0 для выхода): ");
@@ -1106,6 +1146,7 @@ public class Main {
             System.out.println("1. Создать заказ");
             System.out.println("2. Удалить заказ");
             System.out.println("3. Вывести список всех заказов");
+            System.out.println("4. Фильтр по дате.");
             System.out.println("0. Выйти");
             System.out.print("Выбор: ");
             int choice = scanner.nextInt();
@@ -1657,10 +1698,21 @@ public class Main {
                     break;
                 }
                 case 4:
-                    ArrayList<Order> sortedPizzaOrder = new ArrayList<>(orders);
-                    sortedPizzaOrder.sort((o1, o2) -> o1.getOrderTime().compareTo(o2.getOrderTime()));
-                    displayListOfOrder(sortedPizzaOrder);
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+                    System.out.print("Введите дату и время (формат: 05.03.2026 15:30): ");
+                    String inputTime = scanner.nextLine();
+
+                    if (inputTime.equalsIgnoreCase("0")) continue;
+                    LocalDateTime targetTime = LocalDateTime.parse(inputTime, formatter);
+
+                    ArrayList<Order> filterOrder = new ArrayList<>();
+                    for (Order elem : orders) {
+                        if (Objects.equals(elem.getOrderTime(), targetTime))
+                            filterOrder.add(elem);
+                    }
+                    displayListOfOrder(filterOrder);
                     break;
+
                 case 0:
                     return;
                 default:

@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class PizzaSide implements PriceAndName{
     private String name = "0";
