@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -13,7 +15,6 @@ public class Main {
     public static void main(String[] args) {
         Main myProgram = new Main();
         myProgram.seedData();
-
         myProgram.run();
     }
 
@@ -77,6 +78,7 @@ public class Main {
             System.out.println("2. Редактировать");
             System.out.println("3. Удалить");
             System.out.println("4. Вывести список существующих ингредиентов");
+            System.out.println("5. Вывести список ингредиентов по цене");
             System.out.println("0. Выйти");
             System.out.print("Выбор: ");
             int choice = scanner.nextInt();
@@ -121,7 +123,7 @@ public class Main {
 
                 case 2:
                     while (true) {
-                        displayListOfIngredients();
+                        displayListOfIngredients(ingredients);
                         System.out.print("Введите название ингредиента для редактирования (или 0 для выхода): ");
                         String name = scanner.nextLine();
                         if (name.equals("0")) break;
@@ -172,7 +174,7 @@ public class Main {
 
                 case 3:
                     while (true) {
-                        displayListOfIngredients();
+                        displayListOfIngredients(ingredients);
                         System.out.print("Введите название ингредиента для удаления (или 0 для выхода): ");
                         String delIng = scanner.nextLine();
                         if (delIng.equals("0")) break;
@@ -197,11 +199,16 @@ public class Main {
                     break;
 
                 case 4:
-                    displayListOfIngredients();
+                    displayListOfIngredients(ingredients);
                     System.out.print("Нажмите Enter, чтобы продолжить...");
                     scanner.nextLine();
                     break;
 
+                case 5:
+                    ArrayList<Ingredient> sortedIngr = new ArrayList<>(ingredients);
+                    sortedIngr.sort((o1, o2) -> Double.compare(o1.getPrice(), o2.getPrice()));
+                    displayListOfIngredients(sortedIngr);
+                    break;
                 case 0:
                     return;
 
@@ -212,11 +219,11 @@ public class Main {
         }
     }
 
-    public void displayListOfIngredients() {
+    public void displayListOfIngredients(@NotNull ArrayList<Ingredient> arr) {
         int idx = 1;
         System.out.println("Список всех ингредиентов/цены:");
-        for (Ingredient elem : ingredients) {
-            System.out.printf("%d. %s / %.2f \n", idx, elem.getName(), elem.getPrice());
+        for (Ingredient elem : arr) {
+            System.out.printf("%d. %s - %.2f руб\n", idx, elem.getName(), elem.getPrice());
             idx++;
         }
 
@@ -229,6 +236,7 @@ public class Main {
             System.out.println("2. Редактировать");
             System.out.println("3. Удалить");
             System.out.println("4. Вывести список существующих основ");
+            System.out.println("5. Вывести список основ по цене");
             System.out.println("0. Выйти");
             System.out.print("Выбор: ");
             int choice = scanner.nextInt();
@@ -276,7 +284,7 @@ public class Main {
 
                 case 2:
                     while (true) {
-                        displayListOfBases();
+                        displayListOfBases(base);
                         System.out.print("Введите название основы для редактирования (или 0 для выхода): ");
                         String name = scanner.nextLine();
                         if (name.equals("0")) break;
@@ -297,12 +305,18 @@ public class Main {
                         System.out.println("1. Изменить название");
                         System.out.println("2. Изменить цену");
                         System.out.println("0. Отмена");
+                        System.out.print("Выбор: ");
                         int choice2 = scanner.nextInt();
                         scanner.nextLine();
+
 
                         if (choice2 == 0) continue;
 
                         if (choice2 == 1) {
+                            if (name.equalsIgnoreCase("Классическая")) {
+                                System.out.println("Ошибка: У классической основы  нельзя менять название!\n");
+                                continue;
+                            }
                             System.out.print("Введите новое название (или 0 для отмены): ");
                             String newName = scanner.nextLine();
                             if (!newName.equals("0")) {
@@ -313,24 +327,36 @@ public class Main {
                             System.out.print("Введите новую цену (или 0 для отмены): ");
                             double newPrice2 = scanner.nextDouble();
                             scanner.nextLine();
-
                             if (newPrice2 == 0) continue;
 
                             double oldPrice = target.getPrice();
                             target.setPrice(newPrice2);
 
-                            if (target.getPrice() != oldPrice) {
-                                System.out.println("Цена успешно обновлена!\n");
+                            if (target.getPrice() != newPrice2) {
+                                System.out.println("Цена обновлена до максимально возможной!\n");
+                            } else if (target.getPrice() != oldPrice) {
+                                if (name.equalsIgnoreCase("Классическая") && target.getPrice() < oldPrice) {
+                                    for (PizzaBase elem : base) {
+                                        if (elem.getPrice() > newPrice2 * 1.2) {
+                                            elem.setPrice(newPrice2 * 1.2);
+                                            System.out.println("Так как цена классической основы изменилась в меньшую сторону," +
+                                                    " ценник " + elem.getName() + " основы изменился до максимально возможного " +
+                                                    elem.getPrice() + " руб");
+                                        }
+                                    }
+                                }
+                                System.out.println("Цена успешно обновлена!");
+                            } else {
+                                System.out.println("Введена некорректная стоимость...\n");
+
                             }
-                        } else {
-                            System.out.println("Введена некорректная цифра...\n");
                         }
                     }
                     break;
 
                 case 3:
                     while (true) {
-                        displayListOfBases();
+                        displayListOfBases(base);
                         System.out.print("Введите название основы для удаления (или 0 для выхода): ");
                         String delBase = scanner.nextLine();
                         if (delBase.equals("0")) break;
@@ -360,9 +386,16 @@ public class Main {
                     break;
 
                 case 4:
-                    displayListOfBases();
+                    displayListOfBases(base);
                     System.out.print("Нажмите Enter, чтобы продолжить...");
                     scanner.nextLine();
+                    break;
+
+                case 5:
+                    ArrayList<PizzaBase> sortedBase = new ArrayList<>(base);
+                    sortedBase.sort((o1, o2) -> Double.compare(o1.getPrice(), o2.getPrice()));
+                    displayListOfBases(sortedBase);
+
                     break;
 
                 case 0:
@@ -375,11 +408,11 @@ public class Main {
         }
     }
 
-    public void displayListOfBases() {
+    public void displayListOfBases(@NotNull ArrayList<PizzaBase> arr) {
         int idx = 1;
         System.out.println("\nСписок всех основ/цены:");
-        for (PizzaBase elem : base) {
-            System.out.printf("%d. %s / %.2f \n", idx, elem.getName(), elem.getPrice());
+        for (PizzaBase elem : arr) {
+            System.out.printf("%d. %s - %.2f руб\n", idx, elem.getName(), elem.getPrice());
             idx++;
         }
     }
@@ -391,6 +424,7 @@ public class Main {
             System.out.println("2. Редактировать пиццу");
             System.out.println("3. Удалить пиццу");
             System.out.println("4. Вывести список всех пицц");
+            System.out.println("5. Вывести список всех пицц по цене");
             System.out.println("0. Выйти");
             System.out.print("Выбор: ");
             int choice = scanner.nextInt();
@@ -445,7 +479,7 @@ public class Main {
 
                         PizzaBase selectedBase = null;
                         while (selectedBase == null) {
-                            displayListOfBases();
+                            displayListOfBases(base);
                             System.out.print("Введите название основы для пиццы (или 0 для отмены): ");
                             String baseName = scanner.nextLine();
                             if (baseName.equals("0")) break;
@@ -465,7 +499,7 @@ public class Main {
 
                         PizzaSide selectedSide = null;
                         while (selectedSide == null) {
-                            displayListOfPizzaSides();
+                            displayListOfPizzaSides(sides);
                             System.out.print("Введите название бортика для пиццы (или 0 для того чтобы продолжить): ");
                             String sideName = scanner.nextLine();
                             if (sideName.equals("0")) break;
@@ -489,11 +523,10 @@ public class Main {
                         } else newPizza = new Pizza(newName, selectedBase, sizePizza);
 
                         while (true) {
-                            displayListOfIngredients();
+                            displayListOfIngredients(ingredients);
                             System.out.println("Текущая сборка: " + newPizza.getName()
                                     + " | Основа: " + selectedBase.getName()
-                                    + " Размер: " + newPizza.getSize()
-                                    + " Бортик: " + selectedSide.getName());
+                                    + " | Размер: " + newPizza.getSize());
                             System.out.print("Введите название ингредиента для добавления (или 0 чтобы завершить сборку): ");
                             String ingName = scanner.nextLine();
                             if (ingName.equals("0")) break;
@@ -522,7 +555,7 @@ public class Main {
 
                 case 2:
                     while (true) {
-                        displayListOfPizzas();
+                        displayListOfPizzas(pizzas);
                         System.out.print("Введите название пиццы для редактирования (или 0 для выхода): ");
                         String name = scanner.nextLine();
                         if (name.equals("0")) break;
@@ -563,7 +596,7 @@ public class Main {
                                 break;
                             }
                             case 2: {
-                                displayListOfBases();
+                                displayListOfBases(base);
                                 System.out.print("Введите название новой основы (или 0 для отмены): ");
                                 String baseName = scanner.nextLine();
                                 if (baseName.equals("0")) continue;
@@ -585,7 +618,7 @@ public class Main {
                             }
 
                             case 3: {
-                                displayListOfIngredients();
+                                displayListOfIngredients(ingredients);
                                 System.out.print("Введите название ингредиента для добавления (или 0 для отмены): ");
                                 String ingName = scanner.nextLine();
                                 if (ingName.equals("0")) continue;
@@ -672,7 +705,7 @@ public class Main {
                                     System.out.println("У этой пиццы уже есть бортик");
                                     break;
                                 }
-                                displayListOfPizzaSides();
+                                displayListOfPizzaSides(sides);
                                 System.out.print("Введите название бортика (или 0 для выхода): ");
                                 String str = scanner.nextLine();
 
@@ -721,7 +754,7 @@ public class Main {
                     break;
                 case 3:
                     while (true) {
-                        displayListOfPizzas();
+                        displayListOfPizzas(pizzas);
                         System.out.print("Введите название пиццы для удаления (или 0 для выхода): ");
                         String delPizza = scanner.nextLine();
                         if (delPizza.equals("0")) break;
@@ -746,9 +779,15 @@ public class Main {
                     break;
 
                 case 4:
-                    displayListOfPizzas();
+                    displayListOfPizzas(pizzas);
                     System.out.print("Нажмите Enter, чтобы продолжить...");
                     scanner.nextLine();
+                    break;
+
+                case 5:
+                    ArrayList<Pizza> sortedPizza = new ArrayList<>(pizzas);
+                    sortedPizza.sort((o1, o2) -> Double.compare(o1.calculatePrice(), o2.calculatePrice()));
+                    displayListOfPizzas(sortedPizza);
                     break;
 
                 case 0:
@@ -761,11 +800,11 @@ public class Main {
         }
     }
 
-    public void displayListOfPizzas() {
+    public void displayListOfPizzas(@NotNull ArrayList<Pizza> arr) {
         System.out.println("\n=== НАШЕ МЕНЮ ПИЦЦ ===");
 
         int idx = 1;
-        for (Pizza p : pizzas) {
+        for (Pizza p : arr) {
             System.out.printf("%d. Пицца \"%s\" (Основа: %s) (Размер: %s) (Бортик: %s) - %.2f руб.\n",
                     idx, p.getName(), p.getBase().getName(),p.getSize(), p.check(), p.calculatePrice());
 
@@ -795,7 +834,8 @@ public class Main {
             System.out.println("2. Редактировать бортик");
             System.out.println("3. Удалить бортик");
             System.out.println("4. Вывести список всех бортиков");
-            System.out.println("5. Показать доступные пиццы для бортика");
+            System.out.println("5. Вывести список всех бортиков по цене");
+            System.out.println("6. Показать доступные пиццы для бортика");
             System.out.println("0. Выйти");
             System.out.print("Выбор: ");
             int choice = scanner.nextInt();
@@ -825,7 +865,7 @@ public class Main {
 
                         System.out.println("\n--- Сборка состава бортика ---");
                         while (true) {
-                            displayListOfIngredients();
+                            displayListOfIngredients(ingredients);
                             System.out.println("Имя бортика: " + newSide.getName() + " | Текущая цена: " + newSide.calculatePrice() + " руб.");
                             System.out.print("Введите название ингредиента для добавления (или 0 чтобы перейти к выбору пицц): ");
                             String ingName = scanner.nextLine();
@@ -859,7 +899,7 @@ public class Main {
                             break;
                         }
 
-                        displayListOfPizzaSides();
+                        displayListOfPizzaSides(sides);
                         System.out.print("Введите название бортика для редактирования (или 0 для выхода): ");
                         String name = scanner.nextLine();
                         if (name.equals("0")) break;
@@ -895,7 +935,7 @@ public class Main {
                                 System.out.println("Название обновлено!\n");
                             }
                         } else if (choice2 == 2) {
-                            displayListOfIngredients();
+                            displayListOfIngredients(ingredients);
                             System.out.print("Введите название ингредиента для добавления (или 0 для отмены): ");
                             String ingName = scanner.nextLine();
                             if (ingName.equals("0")) continue;
@@ -952,7 +992,7 @@ public class Main {
                             break;
                         }
 
-                        displayListOfPizzaSides();
+                        displayListOfPizzaSides(sides);
                         System.out.print("Введите название бортика для удаления (или 0 для выхода): ");
                         String delName = scanner.nextLine();
                         if (delName.equals("0")) break;
@@ -980,14 +1020,20 @@ public class Main {
                     break;
 
                 case 4:
-                    displayListOfPizzaSides();
+                    displayListOfPizzaSides(sides);
                     System.out.print("Нажмите Enter, чтобы продолжить...");
                     scanner.nextLine();
                     break;
 
                 case 5:
+                    ArrayList<PizzaSide> sortedPizzaSide = new ArrayList<>(sides);
+                    sortedPizzaSide.sort((o1, o2) -> Double.compare(o1.calculatePrice(), o2.calculatePrice()));
+                    displayListOfPizzaSides(sortedPizzaSide);
+                    break;
+
+                case 6:
                     while (true) {
-                        displayListOfPizzaSides();
+                        displayListOfPizzaSides(sides);
                         System.out.print("Введите название интересующего бортика (или 0 для выхода): ");
                         String sideName = scanner.nextLine();
                         if (sideName.equals("0")) break;
@@ -1026,15 +1072,15 @@ public class Main {
         }
     }
 
-    public void displayListOfPizzaSides() {
+    public void displayListOfPizzaSides(@NotNull ArrayList<PizzaSide> arr) {
         System.out.println("\n=== СПИСОК БОРТИКОВ ===");
-        if (sides.isEmpty()) {
+        if (arr.isEmpty()) {
             System.out.println("Список бортиков пока пуст.");
             return;
         }
 
         int idx = 1;
-        for (PizzaSide s : sides) {
+        for (PizzaSide s : arr) {
             System.out.printf("%d. Бортик \"%s\" - %.2f руб.\n", idx, s.getName(), s.calculatePrice());
             System.out.print("   Состав: ");
 
@@ -1096,7 +1142,7 @@ public class Main {
 
                         switch (choice2) {
                             case 1: {
-                                displayListOfPizzas();
+                                displayListOfPizzas(pizzas);
                                 System.out.print("Введите название пиццы (или 0 для отмены): ");
                                 String pizzaName = scanner.nextLine();
                                 if (pizzaName.equals("0")) continue;
@@ -1349,7 +1395,7 @@ public class Main {
                                 String customName = scanner.nextLine();
                                 if (customName.equals("0")) continue;
 
-                                displayListOfBases();
+                                displayListOfBases(base);
                                 System.out.print("Введите название основы для пиццы (или 0 для отмены): ");
                                 String baseName = scanner.nextLine();
                                 if (baseName.equals("0")) continue;
@@ -1434,7 +1480,7 @@ public class Main {
 
                                     Map<Ingredient, Integer> tempIngredients = new HashMap<>();
                                     while (true) {
-                                        displayListOfIngredients();
+                                        displayListOfIngredients(ingredients);
                                         System.out.println("Текущая начинка для кусочков " + startSlice + "-" + endSlice + ":");
                                         for (Map.Entry<Ingredient, Integer> entry : tempIngredients.entrySet()) {
                                             System.out.println("- " + entry.getKey().getName() + " x" + entry.getValue());
@@ -1462,7 +1508,7 @@ public class Main {
 
                                     PizzaSide tempSide = null;
                                     while (true) {
-                                        displayListOfPizzaSides();
+                                        displayListOfPizzaSides(sides);
                                         System.out.print("Введите название бортика для этих кусочков (или 0 если бортик не нужен): ");
                                         String sideName = scanner.nextLine();
                                         if (sideName.equals("0")) break;
@@ -1585,7 +1631,7 @@ public class Main {
                     break;
                 }
                 case 2: {
-                    displayListOfOrder();
+                    displayListOfOrder(orders);
                     System.out.print("Введите id для удаления заказа (или 0 для отмены):");
                     String choic3 = scanner.nextLine();
                     if (choic3.equals("0")) break;
@@ -1607,9 +1653,14 @@ public class Main {
                     break;
                 }
                 case 3: {
-                    displayListOfOrder();
+                    displayListOfOrder(orders);
                     break;
                 }
+                case 4:
+                    ArrayList<Order> sortedPizzaOrder = new ArrayList<>(orders);
+                    sortedPizzaOrder.sort((o1, o2) -> o1.getOrderTime().compareTo(o2.getOrderTime()));
+                    displayListOfOrder(sortedPizzaOrder);
+                    break;
                 case 0:
                     return;
                 default:
@@ -1619,15 +1670,15 @@ public class Main {
         }
     }
 
-    public void displayListOfOrder() {
+    public void displayListOfOrder(@NotNull ArrayList<Order> arr) {
         System.out.println("\n=== СПИСОК ЗАКАЗОВ ===");
-        if (orders.isEmpty()) {
+        if (arr.isEmpty()) {
             System.out.println("Список заказов пока пуст.");
             return;
         }
 
         int idx = 1;
-        for (Order o : orders) {
+        for (Order o : arr) {
             System.out.printf("ЗАКАЗ № - %d", idx);
             o.printReceipt();
             idx++;

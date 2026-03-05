@@ -14,13 +14,19 @@ public class PizzaBase {
 
     public String getName() { return name;}
 
+    public static double getStandardPrice() {return standardPrice;}
+
     public double getPrice() {return price;}
 
     public void setName(String name) {this.name = name;}
 
     public void setPrice(double price) {
-        if (price >= 0 && price <= standardPrice * 1.2) {
+        if (this.name.equalsIgnoreCase("Классическая") && price > 0) {
             this.price = price;
+            standardPrice = price;
+        }
+        if (price > 0) {
+            this.price = Math.min(price, standardPrice * 1.2);
         } else {
             System.out.println("Ошибка: стоимость не может быть отрицательной " +
                     "или отличаться от классической более чем на 20%!");

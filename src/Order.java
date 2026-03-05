@@ -75,4 +75,6 @@ public class Order {
     }
 
     public String getId() { return id; }
+
+    public LocalDateTime getOrderTime() {return orderTime;}
 }
