@@ -19,6 +19,11 @@ public class Ingredient {
         this.name = name;
     }
 
+    @Override
+    public String toString() {
+        return "name: " + name + '\'' + ", price: " + price;
+    }
+
     public void setPrice(double price) {
         this.price = price;
     }

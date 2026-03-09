@@ -14,6 +14,11 @@ public class PizzaBase {
 
     public String getName() { return name;}
 
+    @Override
+    public String toString() {
+        return "name: " + name + '\'' + ", price: " + price;
+    }
+
     public static double getStandardPrice() {return standardPrice;}
 
     public double getPrice() {return price;}
